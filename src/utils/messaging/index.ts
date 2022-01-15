@@ -27,34 +27,51 @@ export const fetchGroups = async (): SendBird.GroupChannel[] => {
   }
 };
 
-export const addContact = () => {
+export const addContact = async (contact: string) => {
   // CREATE A GROUP WITH A USER / NEW CONTACT
-  sb.GroupChannel.createChannelWithUserIds(
-    ['USER_ID', 'USER_ID_2'], // TODO
-    true,
-    `${'USER_ID'} && USER_ID_2`,
+  let error = '';
+  const setError = (errorMessage: string) => (error = errorMessage);
 
-    (groupChannel, error3) => {
-      if (error3) {
+  await sb.GroupChannel.createChannelWithUserIds(
+    [sb.currentUser.userId, contact],
+    true,
+    `${sb.currentUser.userId} && ${contact}`,
+
+    (groupChannel, creationError) => {
+      console.log('creationerror', error, creationError);
+
+      if (creationError) {
+        setError(creationError.message);
         return;
       }
 
-      var immutableObject = Immutable.fromJS(groupChannel);
-      fetchGroups();
-      console.log('@@@@@', immutableObject);
+      console.log('membercount', groupChannel.memberCount);
+
+      if (groupChannel.memberCount <= 1) {
+        groupChannel.leave((response, deleteError) => {
+          console.log('delete', deleteError);
+
+          if (deleteError) return deleteError;
+          console.log("The contact doesn't exist", error);
+          setError("The contact doesn't exist");
+        });
+      }
     },
   );
+  console.log(error, 'uwu');
+
+  return error;
 };
 
 export const getMessages = (selected: SendBird.GroupChannel) => {
   console.log('loading', selected);
 
   // OBTAIN LIST OF ALL MESSAJES FROM A GROUP
-  var messageFilter = new sb.MessageFilter();
-  var startingPoint = Date.now();
-  var messageCollectionFetchLimit = 100;
+  const messageFilter = new sb.MessageFilter();
+  const startingPoint = Date.now();
+  const messageCollectionFetchLimit = 100;
 
-  var messageCollection: any = selected
+  const messageCollection: any = selected
     .createMessageCollection()
     .setFilter(messageFilter)
     .setStartingPoint(startingPoint)

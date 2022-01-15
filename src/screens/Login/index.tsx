@@ -1,18 +1,18 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TextInput, View } from 'react-native';
 import { Button } from 'react-native-paper';
-import Immutable from 'immutable';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sb } from '../../utils/messaging';
 import routes from '../../config/routes';
 
-const USER_ID = 'USER_ID_1';
-
 const Login = ({ navigation }) => {
+  const [userId, setUserID] = useState('');
   useEffect(() => {
     sb.useAsyncStorageAsDatabase(AsyncStorage);
+  }, []);
 
-    sb.connect(USER_ID, (user, error) => {
+  const onLoging = () => {
+    sb.connect(userId, (user, error) => {
       // connection, use a user_ID
       console.log(user, '@@@@@@@@@');
 
@@ -20,7 +20,7 @@ const Login = ({ navigation }) => {
         return console.log('error', error);
       }
 
-      var channelHandler = new sb.ChannelHandler();
+      const channelHandler = new sb.ChannelHandler();
       channelHandler.onMessageReceived = function (channel, message) {
         console.log(channel, message, 'received');
       };
@@ -33,25 +33,8 @@ const Login = ({ navigation }) => {
       };
 
       sb.addChannelHandler('UNIQUE_HANDLER_ID', channelHandler);
+      navigation.navigate(routes.GROUPS);
     });
-  }, []);
-
-  const addContact = () => {
-    // CREATE A GROUP WITH A USER / NEW CONTACT
-    sb.GroupChannel.createChannelWithUserIds(
-      [USER_ID, 'USER_ID_2'],
-      true,
-      `${USER_ID} && USER_ID_2`,
-
-      (groupChannel, error3) => {
-        if (error3) {
-          return;
-        }
-
-        var immutableObject = Immutable.fromJS(groupChannel);
-        console.log('@@@@@', immutableObject);
-      },
-    );
   };
 
   return (
@@ -65,11 +48,9 @@ const Login = ({ navigation }) => {
           borderWidth: 1,
           padding: 10,
         }}
-        onChangeText={() => {}}
+        onChangeText={setUserID}
       />
-      <Button onPress={navigation.navigate.bind(null, routes.GROUPS)}>
-        Login
-      </Button>
+      <Button onPress={onLoging}>Login</Button>
     </View>
   );
 };

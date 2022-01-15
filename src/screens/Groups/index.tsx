@@ -1,13 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { FlatList, Text, TouchableOpacity } from 'react-native';
+import React, { FC, useEffect, useState } from 'react';
+import { FlatList, Text, TextInput, TouchableOpacity } from 'react-native';
 import SendBird from 'sendbird';
 import routes from '../../config/routes';
 import { sb } from '../../utils/messaging';
+import Modal from 'react-native-modal';
+import { AddButton, ModalAddButton, ModalContent, styles } from './styles';
+interface Props {
+  navigation: any;
+}
 
-const Groups = ({ navigation }) => {
+const Groups: FC<Props> = ({ navigation }) => {
   const [groups, setGroups] = useState<SendBird.GroupChannel[]>([]);
+  const [contactModalVisible, setContactModalVisible] = useState(false);
+  const [constact, setContact] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
-  useEffect(() => {
+  const fetchGroups = () => {
     const listQuery = sb.GroupChannel.createMyGroupChannelListQuery();
     listQuery.includeEmpty = true;
     listQuery.memberStateFilter = 'all';
@@ -16,16 +24,44 @@ const Groups = ({ navigation }) => {
 
     if (listQuery.hasNext) {
       listQuery.next((groupChannels, error) => {
-        if (error) {
-          console.log(error);
-        }
-
+        if (error) return console.log(error);
         setGroups(groupChannels);
       });
     }
-  }, []);
+  };
 
-  const renderMessages = ({
+  const addContact = async (contact: string) => {
+    const contacts = groups.map(
+      item =>
+        item.members.find(({ userId }) => userId !== sb.currentUser.userId)
+          ?.userId,
+    );
+
+    if (!contacts.includes(constact)) {
+      await sb.GroupChannel.createChannelWithUserIds(
+        [sb.currentUser.userId, contact],
+        true,
+        `${sb.currentUser.userId} && ${contact}`,
+
+        (groupChannel, creationError) => {
+          if (creationError) return setErrorMessage(creationError.message);
+
+          if (groupChannel.memberCount <= 1) {
+            groupChannel.leave(
+              setErrorMessage.bind(null, "The contact doesn't exist"),
+            );
+            return;
+          }
+          fetchGroups();
+          setContactModalVisible(false);
+        },
+      );
+      return;
+    }
+    setErrorMessage('Contact already added');
+  };
+
+  const renderGroups = ({
     item,
     index,
   }: {
@@ -41,20 +77,40 @@ const Groups = ({ navigation }) => {
       onPress={navigation.navigate.bind(null, routes.MESSAGES, {
         selectedGroup: item,
       })}>
-      {console.log(item.unreadMessageCount)}
       <Text>
-        {item.members.find(({ userId }) => userId !== 'USER_ID_1')?.userId}
+        {
+          item.members.find(({ userId }) => userId !== sb.currentUser.userId)
+            ?.userId
+        }
       </Text>
       {item.lastMessage?.message && <Text>{item.lastMessage?.message}</Text>}
     </TouchableOpacity>
   );
 
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
   return (
-    <FlatList
-      data={groups}
-      keyExtractor={(_item, index) => `${index}`}
-      renderItem={renderMessages}
-    />
+    <>
+      <Modal isVisible={contactModalVisible} style={styles.addContactModal}>
+        <ModalContent>
+          <TextInput
+            onChangeText={setContact}
+            maxLength={22}
+            style={{ backgroundColor: 'red', width: '100%' }}
+          />
+          <Text>{errorMessage}</Text>
+          <ModalAddButton onPress={addContact.bind(null, constact)} />
+        </ModalContent>
+      </Modal>
+      <FlatList
+        data={groups}
+        keyExtractor={(_item, index) => `contacts/${index}`}
+        renderItem={renderGroups}
+      />
+      <AddButton onPress={setContactModalVisible.bind(null, true)} />
+    </>
   );
 };
 
