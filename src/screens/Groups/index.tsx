@@ -1,10 +1,18 @@
 import React, { FC, useEffect, useState } from 'react';
-import { FlatList, Text, TextInput, TouchableOpacity } from 'react-native';
+import { FlatList, Text, View } from 'react-native';
 import SendBird from 'sendbird';
 import routes from '../../config/routes';
 import { sb } from '../../utils/messaging';
 import Modal from 'react-native-modal';
-import { AddButton, ModalAddButton, ModalContent, styles } from './styles';
+import {
+  AddButton,
+  Contact,
+  ModalBackground,
+  ModalButton,
+  ModalContent,
+  NewContactInput,
+  styles,
+} from './styles';
 interface Props {
   navigation: any;
 }
@@ -68,41 +76,53 @@ const Groups: FC<Props> = ({ navigation }) => {
     item: SendBird.GroupChannel;
     index: number;
   }) => (
-    <TouchableOpacity
+    <Contact
       key={`groups${index}`}
-      style={{
-        backgroundColor: 'red',
-        marginBottom: 10,
-      }}
       onPress={navigation.navigate.bind(null, routes.MESSAGES, {
         selectedGroup: item,
       })}>
-      <Text>
+      <Text style={styles.contactName}>
         {
           item.members.find(({ userId }) => userId !== sb.currentUser.userId)
             ?.userId
         }
       </Text>
-      {item.lastMessage?.message && <Text>{item.lastMessage?.message}</Text>}
-    </TouchableOpacity>
+      {item.lastMessage?.message && (
+        <Text style={styles.lastMessage}>{item.lastMessage?.message}</Text>
+      )}
+    </Contact>
   );
 
   useEffect(() => {
     fetchGroups();
   }, []);
 
+  const onPressCancel = () => {
+    setErrorMessage('');
+    setContactModalVisible.bind(null, false);
+  };
+
   return (
     <>
-      <Modal isVisible={contactModalVisible} style={styles.addContactModal}>
-        <ModalContent>
-          <TextInput
-            onChangeText={setContact}
-            maxLength={22}
-            style={{ backgroundColor: 'red', width: '100%' }}
-          />
-          <Text>{errorMessage}</Text>
-          <ModalAddButton onPress={addContact.bind(null, constact)} />
-        </ModalContent>
+      <Modal style={styles.modal} isVisible={contactModalVisible}>
+        <ModalBackground onPress={setContactModalVisible.bind(null, false)}>
+          <ModalContent>
+            <NewContactInput
+              placeholder="New contact"
+              onChangeText={setContact}
+              maxLength={22}
+            />
+            <Text>{errorMessage}</Text>
+            <View style={styles.modalButtonsContainer}>
+              <ModalButton color="red" onPress={onPressCancel}>
+                <Text style={styles.modalButtonText}>CANCEL</Text>
+              </ModalButton>
+              <ModalButton onPress={addContact.bind(null, constact)}>
+                <Text style={styles.modalButtonText}>ADD</Text>
+              </ModalButton>
+            </View>
+          </ModalContent>
+        </ModalBackground>
       </Modal>
       <FlatList
         data={groups}
