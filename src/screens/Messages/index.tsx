@@ -5,12 +5,11 @@ import {
   KeyboardAvoidingView,
   SafeAreaView,
   Text,
-  TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import SendBird from 'sendbird';
 import { sb, sendMessage } from '../../utils/messaging';
+import { Message, MessageInput, SendButton, styles } from './styles';
 
 const Messages = () => {
   const route: any = useRoute();
@@ -19,6 +18,19 @@ const Messages = () => {
     SendBird.BaseMessageInstance[]
   >([]);
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const channelHandler = new sb.ChannelHandler();
+    channelHandler.onMessageReceived = (targetChannel, message) => {
+      if (targetChannel.url === selectedGroup.url) {
+        setMessagesList([...messagesList, message]);
+      }
+    };
+
+    sb.addChannelHandler('CHAT_HANDLER', channelHandler);
+
+    return sb.removeChannelHandler('CHAT_HANDLER');
+  }, []);
 
   const getMessages = () => {
     const messageFilter = new sb.MessageFilter();
@@ -41,13 +53,13 @@ const Messages = () => {
         if (err) {
           console.log(err);
         }
-        setMessagesList(messages);
+        setMessagesList(messages.reverse());
       })
       .onApiResult((err: any, messages: SendBird.BaseMessageInstance[]) => {
         if (err) {
           console.log(err);
         }
-        setMessagesList(messages);
+        setMessagesList(messages.reverse());
       });
   };
 
@@ -55,48 +67,47 @@ const Messages = () => {
     getMessages();
   }, []);
 
-  const renderMessages = ({ item }: { item: SendBird.BaseMessageInstance }) => {
-    console.log(item);
+  const renderMessages = ({ item }: { item: SendBird.BaseMessageInstance }) => (
+    <View style={styles.messageContainer}>
+      <Message
+        style={
+          item._sender.userId === sb.currentUser.userId
+            ? styles.sended
+            : styles.received
+        }>
+        <Text>{item.message}</Text>
+      </Message>
+    </View>
+  );
 
-    return <Text>{item.message}</Text>;
+  const onPressSend = () => {
+    sendMessage(selectedGroup, message);
+    setMessage('');
+    getMessages();
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
         behavior="padding"
-        style={{ flex: 1 }}
+        style={styles.flexContainer}
         keyboardVerticalOffset={100}>
         <FlatList
+          inverted
           data={messagesList}
           keyExtractor={({ messageId }) => `${messageId}`}
           renderItem={renderMessages}
         />
-        <View
-          style={{ height: 50, flexDirection: 'row', marginHorizontal: 20 }}>
-          <TextInput
+        <View style={styles.inputContainer}>
+          <MessageInput
+            placeholder="Write your message"
             maxLength={200}
-            style={{
-              flex: 1,
-              fontSize: 20,
-              height: 50,
-              backgroundColor: 'red',
-            }}
+            value={message}
             onChangeText={setMessage}
           />
-          <TouchableOpacity
-            onPress={() => {
-              sendMessage(selectedGroup, message);
-              getMessages();
-            }}
-            style={{
-              backgroundColor: 'blue',
-              width: 10,
-              height: 10,
-              alignSelf: 'center',
-              position: 'absolute',
-              right: 20,
-            }}
+          <SendButton
+            disabled={message.trim().length < 1}
+            onPress={onPressSend}
           />
         </View>
       </KeyboardAvoidingView>
