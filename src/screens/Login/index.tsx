@@ -1,57 +1,44 @@
-import React, { useEffect, useState } from 'react';
-import { TextInput, View } from 'react-native';
+import React, { FC, useEffect, useState } from 'react';
+import { KeyboardAvoidingView } from 'react-native';
 import { Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { sb } from '../../utils/messaging';
 import routes from '../../config/routes';
+import { styles, UserInput } from './styles';
 
-const Login = ({ navigation }) => {
+interface Props {
+  navigation: any;
+}
+
+const Login: FC<Props> = ({ navigation }) => {
   const [userId, setUserID] = useState('');
+  const [error, setError] = useState('');
+
   useEffect(() => {
     sb.useAsyncStorageAsDatabase(AsyncStorage);
   }, []);
 
   const onLoging = () => {
-    sb.connect(userId, (user, error) => {
-      // connection, use a user_ID
-      console.log(user, '@@@@@@@@@');
+    if (userId.trim().length < 1)
+      return setError('your user must have at least one character');
+    sb.connect(userId, (_user, e) => {
+      if (error) return setError(e.message);
 
-      if (error) {
-        return console.log('error', error);
-      }
-
-      const channelHandler = new sb.ChannelHandler();
-      channelHandler.onMessageReceived = function (channel, message) {
-        console.log(channel, message, 'received');
-      };
-
-      channelHandler.onMessageUpdated = (channel, message) => {
-        console.log(channel, message, 'updated');
-      };
-      channelHandler.onMessageDeleted = (channel, message) => {
-        console.log(channel, message, 'DELETED');
-      };
-
-      sb.addChannelHandler('UNIQUE_HANDLER_ID', channelHandler);
       navigation.navigate(routes.GROUPS);
     });
   };
 
   return (
-    <View>
-      <TextInput
-        placeholder="USER"
-        maxLength={22}
-        style={{
-          height: 40,
-          margin: 12,
-          borderWidth: 1,
-          padding: 10,
-        }}
-        onChangeText={setUserID}
-      />
-      <Button onPress={onLoging}>Login</Button>
-    </View>
+    <KeyboardAvoidingView behavior="padding" style={styles.container}>
+      <UserInput placeholder="USER" maxLength={22} onChangeText={setUserID} />
+      <Button
+        mode="contained"
+        color="green"
+        style={styles.loginButton}
+        onPress={onLoging}>
+        Login
+      </Button>
+    </KeyboardAvoidingView>
   );
 };
 
