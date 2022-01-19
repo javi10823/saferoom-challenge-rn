@@ -1,4 +1,4 @@
-import React, { FC, useLayoutEffect, useState } from 'react';
+import React, { FC, useCallback, useLayoutEffect, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
 import SendBird from 'sendbird';
 import routes from '../../config/routes';
@@ -15,6 +15,7 @@ import {
 } from './styles';
 import { theme } from '../../utils/theme';
 import { IconButton } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 interface Props {
   navigation: any;
 }
@@ -102,15 +103,16 @@ const Groups: FC<Props> = ({ navigation }) => {
 
   const onPressCancel = () => {
     setErrorMessage('');
-    setContactModalVisible.bind(null, false);
+    setContactModalVisible(false);
   };
+
+  useFocusEffect(useCallback(() => fetchGroups(), [sb]));
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => <></>,
       headerRight: () => <IconButton onPress={onPressLogout} icon="logout" />,
     });
-    fetchGroups();
     const channelHandler = new sb.ChannelHandler();
 
     channelHandler.onMessageReceived = () => {
