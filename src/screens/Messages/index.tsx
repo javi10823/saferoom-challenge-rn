@@ -1,5 +1,5 @@
+import React, { FC, useEffect, useState } from 'react';
 import { useRoute } from '@react-navigation/native';
-import React, { useEffect, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -11,7 +11,7 @@ import SendBird from 'sendbird';
 import { sb, sendMessage } from '../../utils/messaging';
 import { Message, MessageInput, SendButton, styles } from './styles';
 
-const Messages = () => {
+const Messages: FC = () => {
   const route: any = useRoute();
   const { selectedGroup } = route.params;
   const [messagesList, setMessagesList] = useState<
@@ -50,15 +50,11 @@ const Messages = () => {
           .CACHE_AND_REPLACE_BY_API,
       )
       .onCacheResult((err: any, messages: SendBird.BaseMessageInstance[]) => {
-        if (err) {
-          console.log(err);
-        }
+        if (err) return console.log(err);
         setMessagesList(messages.reverse());
       })
       .onApiResult((err: any, messages: SendBird.BaseMessageInstance[]) => {
-        if (err) {
-          console.log(err);
-        }
+        if (err) return console.log(err);
         setMessagesList(messages.reverse());
       });
   };
@@ -106,6 +102,7 @@ const Messages = () => {
             onChangeText={setMessage}
           />
           <SendButton
+            icon="send"
             disabled={message.trim().length < 1}
             onPress={onPressSend}
           />

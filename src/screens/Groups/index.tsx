@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { FC, useLayoutEffect, useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
 import SendBird from 'sendbird';
 import routes from '../../config/routes';
@@ -13,6 +13,8 @@ import {
   NewContactInput,
   styles,
 } from './styles';
+import { theme } from '../../utils/theme';
+import { IconButton } from 'react-native-paper';
 interface Props {
   navigation: any;
 }
@@ -23,7 +25,7 @@ const Groups: FC<Props> = ({ navigation }) => {
   const [constact, setContact] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const fetchGroups = () => {
+  const fetchGroups = (): void => {
     const listQuery = sb.GroupChannel.createMyGroupChannelListQuery();
     listQuery.includeEmpty = true;
     listQuery.memberStateFilter = 'all';
@@ -38,7 +40,7 @@ const Groups: FC<Props> = ({ navigation }) => {
     }
   };
 
-  const addContact = async (contact: string) => {
+  const addContact = async (contact: string): Promise<void> => {
     const contacts = groups.map(
       item =>
         item.members.find(({ userId }) => userId !== sb.currentUser.userId)
@@ -75,7 +77,7 @@ const Groups: FC<Props> = ({ navigation }) => {
   }: {
     item: SendBird.GroupChannel;
     index: number;
-  }) => (
+  }): JSX.Element => (
     <Contact
       key={`groups${index}`}
       onPress={navigation.navigate.bind(null, routes.MESSAGES, {
@@ -93,14 +95,31 @@ const Groups: FC<Props> = ({ navigation }) => {
     </Contact>
   );
 
-  useEffect(() => {
-    fetchGroups();
-  }, []);
+  const onPressLogout = () => {
+    sb.disconnect();
+    navigation.goBack();
+  };
 
   const onPressCancel = () => {
     setErrorMessage('');
     setContactModalVisible.bind(null, false);
   };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => <></>,
+      headerRight: () => <IconButton onPress={onPressLogout} icon="logout" />,
+    });
+    fetchGroups();
+    const channelHandler = new sb.ChannelHandler();
+
+    channelHandler.onMessageReceived = () => {
+      fetchGroups();
+    };
+
+    sb.addChannelHandler('GROUPS_HANDLER', channelHandler);
+    return () => sb.removeChannelHandler('GROUPS_HANDLER');
+  }, []);
 
   return (
     <>
@@ -114,7 +133,7 @@ const Groups: FC<Props> = ({ navigation }) => {
             />
             <Text>{errorMessage}</Text>
             <View style={styles.modalButtonsContainer}>
-              <ModalButton color="red" onPress={onPressCancel}>
+              <ModalButton color={theme.colors.red} onPress={onPressCancel}>
                 <Text style={styles.modalButtonText}>CANCEL</Text>
               </ModalButton>
               <ModalButton onPress={addContact.bind(null, constact)}>
@@ -129,7 +148,11 @@ const Groups: FC<Props> = ({ navigation }) => {
         keyExtractor={(_item, index) => `contacts/${index}`}
         renderItem={renderGroups}
       />
-      <AddButton onPress={setContactModalVisible.bind(null, true)} />
+      <AddButton
+        icon="plus"
+        size={30}
+        onPress={setContactModalVisible.bind(null, true)}
+      />
     </>
   );
 };

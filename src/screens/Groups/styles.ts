@@ -5,20 +5,24 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { IconButton } from 'react-native-paper';
 import styled from 'styled-components';
+import { theme } from '../../utils/theme';
 
-export const AddButton = styled(TouchableOpacity)({
+export const AddButton = styled(IconButton)({
   position: 'absolute',
   right: 25,
   bottom: 25,
-  backgroundColor: 'red',
+  backgroundColor: theme.colors.lightblue,
   width: 50,
   height: 50,
   borderRadius: 50,
+  justifyContent: 'center',
+  alignItems: 'center',
 });
 
 export const ModalContent = styled(View)({
-  backgroundColor: 'white',
+  backgroundColor: theme.colors.white,
   borderRadius: 10,
   width: '90%',
   alignItems: 'center',
@@ -27,7 +31,7 @@ export const ModalContent = styled(View)({
 });
 
 export const ModalButton = styled(TouchableOpacity)(
-  ({ color = 'green' }: { color?: string }) => ({
+  ({ color = theme.colors.green }: { color?: string }) => ({
     backgroundColor: color,
     borderRadius: 25,
     marginTop: 10,
@@ -52,7 +56,7 @@ export const ModalBackground = styled(Pressable)({
 export const Contact = styled(TouchableOpacity)({
   marginVertical: 5,
   height: 65,
-  backgroundColor: '#e3e2e2',
+  backgroundColor: theme.colors.gainsboro,
   borderRadius: 10,
   marginHorizontal: 10,
   padding: 10,
@@ -70,7 +74,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-around',
   },
   modalButtonText: {
-    color: 'white',
+    color: theme.colors.white,
     fontWeight: '700',
   },
   modal: {

@@ -1,5 +1,7 @@
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { IconButton } from 'react-native-paper';
 import styled from 'styled-components';
+import { theme } from '../../utils/theme';
 
 export const MessageInput = styled(TextInput)({
   flex: 1,
@@ -11,14 +13,13 @@ export const MessageInput = styled(TextInput)({
   borderRadius: 100,
 });
 
-export const SendButton = styled(TouchableOpacity)(({ disabled }) => ({
-  backgroundColor: 'green',
-  opacity: disabled ? 0.2 : 1,
+export const SendButton = styled(IconButton)({
+  backgroundColor: theme.colors.green,
   width: 45,
   height: 45,
   alignSelf: 'center',
   borderRadius: 100,
-}));
+});
 
 export const Message = styled(View)({
   maxWidth: '80%',
@@ -42,11 +43,11 @@ export const styles = StyleSheet.create({
   },
   sended: {
     alignSelf: 'flex-end',
-    backgroundColor: '#28aacb',
+    backgroundColor: theme.colors.lightblue,
   },
   received: {
     alignSelf: 'flex-start',
-    backgroundColor: '#7171cb',
+    backgroundColor: theme.colors.moodyBlue,
   },
   messageContainer: {
     width: '90%',

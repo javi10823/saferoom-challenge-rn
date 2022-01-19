@@ -1,5 +1,6 @@
 import { StyleSheet, TextInput } from 'react-native';
 import styled from 'styled-components';
+import { theme } from '../../utils/theme';
 
 export const UserInput = styled(TextInput)({
   height: 40,
@@ -19,5 +20,9 @@ export const styles = StyleSheet.create({
   loginButton: {
     width: '50%',
     borderRadius: 20,
+  },
+  errorMessage: {
+    marginBottom: 10,
+    color: theme.colors.red,
   },
 });
