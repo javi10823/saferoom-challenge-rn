@@ -19,19 +19,6 @@ const Messages: FC = () => {
   >([]);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    const channelHandler = new sb.ChannelHandler();
-    channelHandler.onMessageReceived = (targetChannel, message) => {
-      if (targetChannel.url === selectedGroup.url) {
-        setMessagesList([...messagesList, message]);
-      }
-    };
-
-    sb.addChannelHandler('CHAT_HANDLER', channelHandler);
-
-    return sb.removeChannelHandler('CHAT_HANDLER');
-  }, []);
-
   const getMessages = () => {
     const messageFilter = new sb.MessageFilter();
     const startingPoint = Date.now();
@@ -49,19 +36,14 @@ const Messages: FC = () => {
         sb.MessageCollection.MessageCollectionInitPolicy
           .CACHE_AND_REPLACE_BY_API,
       )
-      .onCacheResult((err: any, messages: SendBird.BaseMessageInstance[]) => {
+      .onCacheResult((err: any) => {
         if (err) return console.log(err);
-        setMessagesList(messages.reverse());
       })
       .onApiResult((err: any, messages: SendBird.BaseMessageInstance[]) => {
         if (err) return console.log(err);
         setMessagesList(messages.reverse());
       });
   };
-
-  useEffect(() => {
-    getMessages();
-  }, []);
 
   const renderMessages = ({ item }: { item: SendBird.BaseMessageInstance }) => (
     <View style={styles.messageContainer}>
@@ -81,6 +63,18 @@ const Messages: FC = () => {
     setMessage('');
     getMessages();
   };
+
+  useEffect(() => {
+    getMessages();
+
+    const channelHandler = new sb.ChannelHandler();
+    channelHandler.onMessageReceived = (targetChannel, message) => {
+      if (targetChannel.url === selectedGroup.url) getMessages();
+    };
+
+    sb.addChannelHandler('CHAT_HANDLER', channelHandler);
+    return () => sb.removeChannelHandler('CHAT_HANDLER');
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
